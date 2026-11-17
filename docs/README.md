@@ -239,4 +239,3 @@ Vaswani, A., Shazeer, N., Parmar, N., Uszkoreit, J., Jones, L., Gomez, A. N., Ka
 ## Credits
 
 Designed and built by **[Pavananjali](https://github.com/Anjaliavv51/visualizing-transformer)**.
-Layout inspired by [designed-to-scale](https://designed-to-scale.vercel.app/). Figure colours taken from the original paper, whose figures Google permits to be reproduced for scholarly work with attribution.
