@@ -238,4 +238,4 @@ Vaswani, A., Shazeer, N., Parmar, N., Uszkoreit, J., Jones, L., Gomez, A. N., Ka
 
 ## Credits
 
-Designed and built by **[Pavananjali](https://github.com/Anjaliavv51/visualizing-transformer)**.
+Designed and built by **[Pavananjali](https://github.com/Anjaliavv51)**.
