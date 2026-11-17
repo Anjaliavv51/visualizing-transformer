@@ -7,11 +7,11 @@
 An interactive, animated explainer of the Transformer (Vaswani et al., NeurIPS 2017).
 Words travel up the encoder, the decoder reads them through cross-attention, and the translation appears one word at a time.
 
-<img src="docs/flow.gif" alt="Animated Transformer: The cat sleeps goes through the encoder and the decoder writes Le chat dort" width="520">
+<img src="../images/flow.gif" alt="Animated Transformer: The cat sleeps goes through the encoder and the decoder writes Le chat dort" width="520">
 
 **Plain HTML, CSS and JavaScript. No build step. No backend. Works on phones.**
 
-Designed by [**Pavananjali**](https://github.com/Anjaliavv51)
+Designed by [**Pavananjali**](https://github.com/Anjaliavv51/visualizing-transformer)
 
 </div>
 
@@ -36,8 +36,8 @@ Static pictures show *structure*. Motion shows *order, cause and flow*, which is
 
 <table>
 <tr>
-<td width="50%"><img src="docs/desktop.png" alt="Desktop layout: chapter tree, step-by-step module, chapter notes"></td>
-<td width="50%"><img src="docs/mobile.png" alt="Phone layout with sticky Back and Next bar"></td>
+<td width="50%"><img src="../images/desktop.png" alt="Desktop layout: chapter tree, step-by-step module, chapter notes"></td>
+<td width="50%"><img src="../images/mobile.png" alt="Phone layout with sticky Back and Next bar"></td>
 </tr>
 <tr>
 <td align="center"><sub>Desktop: chapters on the left, animation in the middle, notes on the right</sub></td>
@@ -56,8 +56,8 @@ Static pictures show *structure*. Motion shows *order, cause and flow*, which is
 
 <table>
 <tr>
-<td><img src="docs/attention-lab.png" alt="Attention Lab view"></td>
-<td><img src="docs/dimensions.png" alt="Dimensions view"></td>
+<td><img src="../images/attention-lab.png" alt="Attention Lab view"></td>
+<td><img src="../images/dimensions.png" alt="Dimensions view"></td>
 </tr>
 </table>
 
@@ -67,7 +67,7 @@ The site has **eight chapters** that walk from the limits of recurrent networks,
 
 ### 1. Step by step: follow the numbers (default)
 
-<div align="center"><img src="docs/steps.gif" alt="Guided walkthrough: 16 steps showing the actual numbers at every module" width="560"></div>
+<div align="center"><img src="../images/steps.gif" alt="Guided walkthrough: 16 steps showing the actual numbers at every module" width="560"></div>
 
 One module at a time, like a short video that you control. Each step shows **where** you are in the architecture (the highlighted block), **what** happens in plain words, the **formula**, and then reveals the real matrices in order: *input → operation → result*. It auto-plays, and you can pause, go back, change the pace, or jump to any step.
 
@@ -96,7 +96,7 @@ The numbers come from a **tiny but real Transformer** (`model.js`): `d_model = 4
 
 ### 2. Full run: see the whole flow at once
 
-<div align="center"><img src="docs/flow.gif" alt="Full run of the translation" width="480"></div>
+<div align="center"><img src="../images/flow.gif" alt="Full run of the translation" width="480"></div>
 
 The continuous animation described below.
 
@@ -179,14 +179,23 @@ You can also open `index.html` directly. Maths (KaTeX) and fonts load from a CDN
 ```
 .
 ├── index.html     page shell: top bar, chapter tree, lesson, step panel
-├── styles.css     theme, layout, responsive rules
-├── app.js         chapters, state, views, inspector, search
-├── model.js       the tiny real Transformer maths (pure functions, easy to test)
-├── steps.js       the guided step-by-step player
-├── flow.js        the full-run animation and the mode switch
-├── vercel.json    security headers for Vercel
-├── docs/          screenshots and the demo GIF used in this README
-└── PAPER.pdf      the original paper
+├── css/
+│   └── styles.css theme, layout, responsive rules
+├── js/
+│   ├── app.js     chapters, state, views, inspector, search
+│   ├── flow.js    the full-run animation and the mode switch
+│   ├── model.js   the tiny real Transformer maths (pure functions, easy to test)
+│   └── steps.js   the guided step-by-step player
+├── images/
+│   ├── attention-lab.png
+│   ├── desktop.png
+│   ├── dimensions.png
+│   ├── flow.gif
+│   ├── mobile.png
+│   └── steps.gif
+└── docs/
+    ├── PAPER.pdf  the original paper
+    └── README.md  project documentation & walkthrough
 ```
 
 ## Security
@@ -229,5 +238,5 @@ Vaswani, A., Shazeer, N., Parmar, N., Uszkoreit, J., Jones, L., Gomez, A. N., Ka
 
 ## Credits
 
-Designed and built by **[Pavananjali](https://github.com/Anjaliavv51)**.
+Designed and built by **[Pavananjali](https://github.com/Anjaliavv51/visualizing-transformer)**.
 Layout inspired by [designed-to-scale](https://designed-to-scale.vercel.app/). Figure colours taken from the original paper, whose figures Google permits to be reproduced for scholarly work with attribution.
