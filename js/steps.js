@@ -178,6 +178,7 @@
     dom.prev.disabled = cur === 0; dom.next.disabled = cur === steps.length - 1;
     dom.dots.forEach((d, k) => { d.classList.toggle('on', k === cur); d.classList.toggle('done', k < cur); d.setAttribute('aria-current', k === cur ? 'step' : 'false'); });
     dom.body.scrollTop = 0;
+    const wrap = dom.body.closest('#fl_wrap'); if (wrap) wrap.scrollTop = 0;
     schedule((idx * 0.35 + 7) * speedF * 1000);
   }
 
@@ -239,5 +240,5 @@
   }
   function stop() { clearTimeout(timer); timer = 0; }
 
-  window.Steps = { mount, stop, goto: (i) => dom && show(i), count: () => (steps ? steps.length : 0), pause: () => { if (playing && dom) toggle(); } };
+  window.Steps = { mount, stop, step: (d) => dom && show(cur + d), goto: (i) => dom && show(i), count: () => (steps ? steps.length : 0), pause: () => { if (playing && dom) toggle(); } };
 })();

@@ -255,7 +255,7 @@
     dom.seek.addEventListener('input', () => { dom.seeking = true; t = dom.seek.value / 100; draw(); });
     dom.seek.addEventListener('change', () => { dom.seeking = false; });
     root.querySelectorAll('.fb[data-key]').forEach((g) => {
-      const open = () => { if (typeof openInspector === 'function') openInspector(g.dataset.key); };
+      const open = () => { if (isFs()) toggleFs(); if (typeof openInspector === 'function') openInspector(g.dataset.key); };
       g.addEventListener('click', open);
       g.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } });
     });
@@ -263,6 +263,50 @@
   }
 
   function stop() { if (raf) cancelAnimationFrame(raf); raf = 0; if (window.Steps) window.Steps.stop(); }
+
+
+  // ---- fullscreen: native Fullscreen API, with a CSS fallback where it is unavailable ----
+  const wrapEl = () => document.getElementById('fl_wrap');
+  function isFs() { const w = wrapEl(); return !!w && (document.fullscreenElement === w || document.webkitFullscreenElement === w || w.classList.contains('fs-fallback')); }
+  function syncFs() {
+    const w = wrapEl(); if (!w) return;
+    const on = isFs();
+    if (!on) { w.classList.remove('fs-fallback'); document.body.classList.remove('fs-lock'); }
+    w.classList.toggle('is-fs', on);
+    const b = w.querySelector('#fl_fs');
+    if (b) { b.textContent = on ? '✕ Exit fullscreen' : '⛶ Fullscreen'; b.setAttribute('aria-pressed', String(on)); }
+  }
+  function fsFallback(w) { w.classList.add('fs-fallback'); document.body.classList.add('fs-lock'); syncFs(); }
+  function toggleFs() {
+    const w = wrapEl(); if (!w) return;
+    if (isFs()) {
+      const ex = document.exitFullscreen || document.webkitExitFullscreen;
+      if (document.fullscreenElement || document.webkitFullscreenElement) { try { ex.call(document); } catch (e) { /* ignore */ } }
+      w.classList.remove('fs-fallback'); syncFs(); return;
+    }
+    const req = w.requestFullscreen || w.webkitRequestFullscreen;
+    if (!req) { fsFallback(w); return; }
+    try { const p = req.call(w); if (p && p.catch) p.catch(() => fsFallback(w)); } catch (e) { fsFallback(w); }
+  }
+  document.addEventListener('fullscreenchange', syncFs);
+  document.addEventListener('webkitfullscreenchange', syncFs);
+  // keys that only apply while fullscreen is on (capture phase so chapter shortcuts do not fire)
+  document.addEventListener('keydown', (e) => {
+    const w = wrapEl();
+    if (!w) return;
+    const t = e.target, typing = t && (/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName) && t.type !== 'range' && t.type !== 'checkbox');
+    if (typing || e.ctrlKey || e.metaKey || e.altKey) return;
+    if ((e.key === 'f' || e.key === 'F') && (isFs() || w.contains(document.activeElement) || document.activeElement === document.body)) { e.preventDefault(); toggleFs(); return; }
+    if (!isFs()) return;
+    if (e.key === 'Escape' && w.classList.contains('fs-fallback')) { e.preventDefault(); toggleFs(); return; }
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === '[' || e.key === ']') {
+      e.preventDefault(); e.stopImmediatePropagation();
+      if (mode === 'steps' && window.Steps) window.Steps.step(e.key === 'ArrowLeft' || e.key === '[' ? -1 : 1);
+    } else if (e.key === ' ') {
+      e.preventDefault();
+      const pb = w.querySelector('#st_play, #fl_play'); if (pb) pb.click();
+    }
+  }, true);
 
   // ---- mode switch: guided steps (default) or the full continuous run ----
   let mode = 'steps';
@@ -276,11 +320,16 @@
   function setMode(m) { mode = m; render(); }
   function mount() {
     const root = document.getElementById('stage_content');
-    root.innerHTML = `<div class="mode-bar" role="group" aria-label="Visualisation mode">
+    root.innerHTML = `<div class="stage-wrap" id="fl_wrap">
+      <div class="mode-bar" role="group" aria-label="Visualisation mode">
         <button type="button" class="mode-btn" data-m="steps">① Step by step <small>real numbers, one module at a time</small></button>
         <button type="button" class="mode-btn" data-m="full">② Full run <small>the whole translation</small></button>
-      </div><div id="fl_body"></div>`;
-    root.querySelectorAll('.mode-btn').forEach((b) => b.addEventListener('click', () => setMode(b.dataset.m)));
+        <button type="button" class="mode-btn fs-btn" id="fl_fs" aria-pressed="false" title="Fullscreen (F)">⛶ Fullscreen</button>
+      </div>
+      <p class="fs-hint">Space play/pause · ←/→ previous / next step (step by step) · F or Esc exit fullscreen</p>
+      <div id="fl_body"></div></div>`;
+    root.querySelectorAll('.mode-btn[data-m]').forEach((b) => b.addEventListener('click', () => setMode(b.dataset.m)));
+    root.querySelector('#fl_fs').addEventListener('click', toggleFs);
     render();
   }
 

@@ -1431,3 +1431,29 @@ kbd { font: inherit; font-size: .68rem; border: 1px solid var(--border-subtle); 
 .st-note { font-size: .66rem; color: var(--text-dim); }
 .stage-card .stage-content { display: block; }
 #fl_body { min-width: 0; }
+
+/* ===== Fullscreen (Step by step and Full run) ===== */
+.mode-bar .fs-btn { flex: 0 0 auto; margin-left: auto; align-self: center; text-align: center; white-space: nowrap; }
+.fs-hint { display: none; font-size: .7rem; color: var(--text-dim); margin: -4px 0 8px; }
+.stage-wrap.is-fs .fs-hint { display: block; }
+.stage-wrap:fullscreen, .stage-wrap:-webkit-full-screen { width: 100vw; height: 100vh; overflow: auto; padding: 16px 22px 28px; background: var(--bg-primary); }
+.stage-wrap.fs-fallback { position: fixed; inset: 0; z-index: 900; overflow: auto; padding: 16px 22px 28px; background: var(--bg-primary); }
+body.fs-lock { overflow: hidden; }
+.stage-wrap.is-fs .mode-btn[data-m] { flex: 0 1 260px; }
+/* bigger drawing and text when there is room */
+.stage-wrap.is-fs .flow-svg { max-height: calc(100vh - 250px); min-width: 0; margin: 0 auto; }
+.stage-wrap.is-fs .flow-cap { font-size: 1.05rem; }
+.stage-wrap.is-fs .st-plain { font-size: 1.05rem; max-width: 80ch; }
+.stage-wrap.is-fs .st-body h3 { font-size: 1.6rem; }
+.stage-wrap.is-fs .mx td { font-size: .9rem; padding: 6px 9px; min-width: 54px; }
+.stage-wrap.is-fs .mx th { font-size: .74rem; }
+.stage-wrap.is-fs .st-item figcaption, .stage-wrap.is-fs .st-op { font-size: .82rem; }
+.stage-wrap.is-fs .st-ex { font-size: .9rem; }
+.stage-wrap.is-fs .st-dot { width: 30px; height: 30px; }
+@container (min-width: 900px) {
+  .stage-wrap.is-fs .st-grid { grid-template-columns: minmax(260px, 28%) minmax(0, 1fr); }
+  .stage-wrap.is-fs .st-diagram { display: block; position: sticky; top: 0; align-self: start; }
+  .stage-wrap.is-fs .st-svg { max-height: calc(100vh - 150px); }
+}
+@media (max-width: 640px) { .mode-bar .fs-btn { flex: 1 1 100%; } .stage-wrap.is-fs { padding: 10px; } }
+[hidden] { display: none !important; }
