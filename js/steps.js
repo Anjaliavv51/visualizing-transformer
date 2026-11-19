@@ -152,10 +152,11 @@
     return `<table class="mx">${head}${body}</table>`;
   }
 
-  let model = null, steps = null, cur = 0, playing = true, speedF = 1, timer = 0, tStart = 0, remain = 0, dom = null;
+  let model = null, steps = null, cur = 0, playing = true, speedF = 1, timer = 0, tStart = 0, remain = 0, dom = null, dwell = 0;
   const VB = { enc: '50 305 300 500', dec: '505 165 300 640', full: '0 0 860 800' };
 
   function show(i) {
+    const prev = cur;
     cur = Math.max(0, Math.min(steps.length - 1, i));
     const s = steps[cur];
     let idx = 0;
@@ -176,10 +177,31 @@
     dom.svg.setAttribute('viewBox', VB[s.side]);
     dom.svg.querySelectorAll('.fb').forEach((g) => g.classList.toggle('on', s.blocks.includes(g.dataset.b)));
     dom.prev.disabled = cur === 0; dom.next.disabled = cur === steps.length - 1;
-    dom.dots.forEach((d, k) => { d.classList.toggle('on', k === cur); d.classList.toggle('done', k < cur); d.setAttribute('aria-current', k === cur ? 'step' : 'false'); });
+    if (window.Progress) {                              // remember the step; a step is "done" once you move past it
+      Progress.setLast({ step: cur });
+      if (prev !== cur) Progress.markStep(prev);
+      clearTimeout(dwell);
+      if (cur === steps.length - 1) dwell = setTimeout(() => { Progress.markStep(cur); paintDots(); }, 4000);
+    }
+    paintDots();
     dom.body.scrollTop = 0;
     const wrap = dom.body.closest('#fl_wrap'); if (wrap) wrap.scrollTop = 0;
     schedule((idx * 0.35 + 7) * speedF * 1000);
+  }
+
+  function paintDots() {
+    dom.dots.forEach((d, k) => {
+      const seen = window.Progress ? Progress.stepSeen(k) : k < cur;
+      if (d.dataset.seen !== String(seen)) {
+        d.dataset.seen = String(seen);
+        if (seen && window.Progress) d.replaceChildren(Progress.tick(d.dataset.init === '1'));
+        else d.textContent = String(k + 1);
+        d.dataset.init = '1';
+      }
+      d.classList.toggle('on', k === cur);
+      d.classList.toggle('done', seen && k !== cur);
+      d.setAttribute('aria-current', k === cur ? 'step' : 'false');
+    });
   }
 
   function schedule(ms) {
@@ -202,6 +224,7 @@
     stop();
     if (!model) model = TT.build(21, 25);
     if (!steps) steps = defs(model);
+    if (window.Progress) cur = Math.max(0, Math.min(steps.length - 1, Progress.last().step));   // resume where you stopped
     root.innerHTML = `
       <div class="steps">
         <div class="st-bar">
@@ -238,7 +261,7 @@
     dom.dots.forEach((d, k) => d.addEventListener('click', () => show(k)));
     sync(); show(cur);
   }
-  function stop() { clearTimeout(timer); timer = 0; }
+  function stop() { clearTimeout(timer); clearTimeout(dwell); timer = 0; }
 
   window.Steps = { mount, stop, step: (d) => dom && show(cur + d), goto: (i) => dom && show(i), count: () => (steps ? steps.length : 0), pause: () => { if (playing && dom) toggle(); } };
 })();

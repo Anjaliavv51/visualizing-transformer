@@ -4,7 +4,6 @@ const GROUPS = [
   { name: '03. Architecture', ids: [5, 6, 7], c: '--fill-ffn' },
   { name: '04. Hands-on', ids: [8], c: '--fill-linear' }
 ];
-const visited = new Set();
 const SHORT = ['Bottlenecks','Paradigm','Scaled dot','Multi-head','Embeddings','Encoder','Decoder','Hands-on'];
 const $id = (i) => document.getElementById(i);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -565,11 +564,24 @@ const elements = {
 
 // Initialize Application
 function initApp() {
+  // Progress: sections per chapter come from the <h4> headings inside each chapter
+  Progress.configure({
+    chapters: CHAPTERS.map((c) => ({ id: c.id, sections: Math.max(1, (c.content.match(/<h4[\s>]/g) || []).length) })),
+    groups: GROUPS.map((g) => ({ name: g.name, ids: g.ids })),
+    steps: 16
+  });
+  const saved = Progress.last();                       // where the learner stopped last time
+  state.currentChapter = CHAPTERS.some((c) => c.id === saved.chapter) ? saved.chapter : 1;
   renderChapterPills();
   setupShellUI();
   loadChapter(state.currentChapter);
+  if (saved.view && saved.view !== state.activeView) switchView(saved.view);
   setupEventListeners();
   updateLiveMetrics();
+  setupProgressUI();
+  if (state.currentChapter > 1 || Progress.sectionsDone() > 0 || Progress.stepsSeen() > 0) {
+    Progress.toast(`Welcome back! Continuing from chapter ${state.currentChapter}.`);
+  }
 }
 
 // Render chapter stepper + course tree (textContent only, no HTML injection)
@@ -589,26 +601,35 @@ function renderChapterPills() {
   renderTree('');
 }
 
-function renderTree(query) {
+function renderTree(query, fresh) {
   const tree = $id('course_tree');
   tree.replaceChildren();
   const needle = String(query || '').trim().toLowerCase();
+  const freshCh = (fresh && fresh.chapters) || [], freshGr = (fresh && fresh.groups) || [];
   GROUPS.forEach((g) => {
     const items = g.ids.map((id) => CHAPTERS.find((c) => c.id === id))
       .filter((c) => !needle || (c.title + ' ' + c.tag + ' ' + c.subtitle).toLowerCase().includes(needle));
     if (!items.length) return;
-    const wrap = document.createElement('div'); wrap.className = 'tree-group';
+    const gDone = Progress.groupDone(g.ids);
+    const wrap = document.createElement('div'); wrap.className = 'tree-group' + (gDone ? ' done' : '');
     const head = document.createElement('div'); head.className = 'tree-head';
     const dot = document.createElement('span'); dot.className = 'folder'; dot.style.background = `var(${g.c})`;
     const nm = document.createElement('span'); nm.textContent = g.name;
     const ct = document.createElement('span'); ct.className = 'count';
-    ct.textContent = `${items.filter((c) => visited.has(c.id)).length}/${items.length}`;
+    if (gDone) { ct.classList.add('has-tick'); ct.append(Progress.tick(freshGr.includes(g.name)), ' ' + g.ids.length + '/' + g.ids.length); ct.title = 'Module complete'; }
+    else ct.textContent = `${g.ids.filter((id) => Progress.chapterDone(id)).length}/${g.ids.length}`;
     head.append(dot, nm, ct);
     const list = document.createElement('div'); list.className = 'tree-items';
     items.forEach((c) => {
+      const done = Progress.chapterDone(c.id), pr = Progress.chapterProgress(c.id);
       const b = document.createElement('button'); b.type = 'button';
-      b.className = 'tree-item' + (c.id === state.currentChapter ? ' active' : '');
-      b.textContent = c.title.replace(/^\d+\.\s*/, '');
+      b.className = 'tree-item' + (c.id === state.currentChapter ? ' active' : '') + (done ? ' done' : '');
+      const label = document.createElement('span'); label.className = 'ti-label'; label.textContent = c.title.replace(/^\d+\.\s*/, '');
+      const mark = document.createElement('span'); mark.className = 'ti-mark';
+      if (done) mark.appendChild(Progress.tick(freshCh.includes(c.id)));
+      else if (pr.done > 0) mark.textContent = `${pr.done}/${pr.total}`;
+      b.append(label, mark);
+      b.setAttribute('aria-label', c.title.replace(/^\d+\.\s*/, '') + (done ? ' (completed)' : pr.done ? ` (${pr.done} of ${pr.total} sections)` : ''));
       b.addEventListener('click', () => { loadChapter(c.id); closeMenu(); });
       list.appendChild(b);
     });
@@ -646,7 +667,7 @@ function loadChapter(chapterId) {
   elements.storyTitle.textContent = chapter.title;
   elements.storySummary.textContent = chapter.subtitle;
   elements.storyContent.innerHTML = chapter.content;
-  visited.add(chapter.id);
+  Progress.setLast({ chapter: chapter.id });
   const grp = GROUPS.find((x) => x.ids.includes(chapter.id));
   $id('crumb_group').textContent = grp ? grp.name : '';
   $id('step_count').textContent = `CHAPTER ${chapter.id} / ${state.totalChapters}`;
@@ -654,15 +675,8 @@ function loadChapter(chapterId) {
   const heads = [...elements.storyContent.querySelectorAll('h4')];
   $id('pill_time').textContent = `${Math.max(1, Math.round(nWords / 180))} min read`;
   $id('pill_sections').textContent = `${heads.length} sections`;
-  const ll = $id('learn_list'); ll.replaceChildren();
-  heads.forEach((h4) => {
-    const row = document.createElement('label'); row.className = 'learn-item';
-    const cb = document.createElement('input'); cb.type = 'checkbox';
-    const sp = document.createElement('span'); sp.textContent = h4.textContent;
-    row.append(cb, sp); ll.appendChild(row);
-  });
-  $id('progress_val').textContent = `${visited.size} / ${state.totalChapters}`;
-  renderTree($id('course_search').value);
+  buildLearnList(chapter, heads);
+  refreshProgressUI();
   const sb = document.querySelector('.step-body'); if (sb) sb.scrollTop = 0;
 
   elements.btnPrev.disabled = chapterId <= 1;
@@ -686,6 +700,109 @@ function loadChapter(chapterId) {
 
   renderStageView();
   renderMath();
+}
+
+// ---------- Progress UI: saved progress, ticks, completion greeting ----------
+let prevDone = null, prevGroups = null, secObs = null;
+const secTimers = new Map(), newSections = new Set();
+
+function buildLearnList(chapter, heads) {
+  const ll = $id('learn_list'); ll.replaceChildren();
+  heads.forEach((h4, i) => {
+    const row = document.createElement('label'); row.className = 'learn-item';
+    const cb = document.createElement('input'); cb.type = 'checkbox';
+    const sp = document.createElement('span'); sp.className = 'txt'; sp.textContent = h4.textContent;
+    const slot = document.createElement('span'); slot.className = 'slot';
+    cb.addEventListener('change', () => markSection(chapter.id, i, cb.checked));
+    row.append(cb, sp, slot); ll.appendChild(row);
+  });
+  paintLearn();
+  observeSections(chapter, heads);
+}
+
+function paintLearn() {
+  const rows = $id('learn_list').children;
+  [...rows].forEach((row, i) => {
+    const done = Progress.sectionDone(state.currentChapter, i);
+    row.querySelector('input').checked = done;
+    row.classList.toggle('done', done);
+    const slot = row.querySelector('.slot');
+    if (done && !slot.firstChild) slot.appendChild(Progress.tick(newSections.has(i)));
+    if (!done) slot.replaceChildren();
+  });
+  newSections.clear();
+}
+
+function markSection(chapterId, i, val) {
+  if (val && !Progress.sectionDone(chapterId, i)) newSections.add(i);
+  Progress.setSection(chapterId, i, val);
+}
+
+// A section counts as read when its heading stays on screen for 2.5 seconds.
+function observeSections(chapter, heads) {
+  if (secObs) secObs.disconnect();
+  secTimers.forEach((t) => clearTimeout(t)); secTimers.clear();
+  if (!('IntersectionObserver' in window)) return;
+  const sb = document.querySelector('.step-body');
+  const scrollable = sb && getComputedStyle(sb).overflowY !== 'visible';
+  secObs = new IntersectionObserver((entries) => {
+    entries.forEach((en) => {
+      const i = heads.indexOf(en.target);
+      if (i < 0) return;
+      if (en.isIntersecting) {
+        if (Progress.sectionDone(chapter.id, i) || secTimers.has(i)) return;
+        secTimers.set(i, setTimeout(() => {
+          secTimers.delete(i);
+          if (!document.hidden && state.currentChapter === chapter.id) markSection(chapter.id, i, true);
+        }, 2500));
+      } else if (secTimers.has(i)) { clearTimeout(secTimers.get(i)); secTimers.delete(i); }
+    });
+  }, { root: scrollable ? sb : null, threshold: 0.9 });
+  heads.forEach((h) => secObs.observe(h));
+}
+
+function paintPills(freshIds) {
+  elements.chapterPills.querySelectorAll('.chapter-pill').forEach((p, idx) => {
+    const id = idx + 1, done = Progress.chapterDone(id), num = p.querySelector('.num');
+    p.classList.toggle('done', done);
+    p.setAttribute('aria-label', `Chapter ${id}: ${CHAPTERS[idx].tag}${done ? ' (completed)' : ''}`);
+    if (done && num.dataset.done !== '1') { num.replaceChildren(Progress.tick(freshIds.includes(id))); num.dataset.done = '1'; }
+    else if (!done && num.dataset.done === '1') { num.textContent = id; num.dataset.done = ''; }
+  });
+}
+
+function refreshProgressUI() {
+  const doneCh = new Set(CHAPTERS.filter((c) => Progress.chapterDone(c.id)).map((c) => c.id));
+  const doneGr = new Set(GROUPS.filter((g) => Progress.groupDone(g.ids)).map((g) => g.name));
+  const freshCh = prevDone ? [...doneCh].filter((id) => !prevDone.has(id)) : [];
+  const freshGr = prevGroups ? [...doneGr].filter((n) => !prevGroups.has(n)) : [];
+  prevDone = doneCh; prevGroups = doneGr;
+  renderTree($id('course_search').value, { chapters: freshCh, groups: freshGr });
+  paintPills(freshCh);
+  paintLearn();
+  $id('progress_val').textContent = `${doneCh.size} / ${state.totalChapters}`;
+  $id('progress_bar').style.width = `${Math.round((doneCh.size / state.totalChapters) * 100)}%`;
+  $id('btn_cele').hidden = !Progress.courseDone();
+  if (Progress.courseDone() && !Progress.celebrated()) {
+    Progress.setCelebrated(true);                      // greet once; the button below can replay it
+    setTimeout(() => Progress.celebrate(), 900);
+  }
+}
+
+function startOver() {
+  Progress.reset();
+  prevDone = null; prevGroups = null;
+  loadChapter(1);
+  closeMenu();
+}
+
+function setupProgressUI() {
+  Progress.onChange(refreshProgressUI);                // also runs when another tab changes the progress
+  Progress.onRestart(startOver);
+  $id('btn_cele').addEventListener('click', () => Progress.celebrate());
+  $id('btn_reset').addEventListener('click', () => {
+    if (window.confirm('Reset all saved progress in this browser?')) startOver();
+  });
 }
 
 function renderInlineMath() {
@@ -792,6 +909,7 @@ function setupChapter8Controls() {
 // Switch Right Stage Tab View
 function switchView(viewName, triggerRender = true) {
   state.activeView = viewName;
+  Progress.setLast({ view: viewName });
   [elements.tabBlueprint, elements.tabAttention, elements.tabDimensions, elements.tabBenchmark].forEach(tab => {
     tab.classList.remove('active');
   });

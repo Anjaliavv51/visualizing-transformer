@@ -154,6 +154,14 @@ The continuous animation: encode once, then decode one word at a time. Play, pau
 | **4** Multi-head attention | **5** Embeddings and positional encoding | **6** The encoder stack |
 | **7** The decoder stack and causal masking | **8** Live architecture and dimension laboratory | |
 
+## 💾 Remembers where you stopped
+
+Close the tab, reload, or come back tomorrow: the site opens **exactly where you left off** (chapter, tab, mode and step).
+
+- ✅ **Green ticks** appear when you finish things: a **section** (its heading stays on screen for a couple of seconds, or you tick it yourself), a **chapter** (all its sections done), a **module** (all its chapters done) and each **guided step** you move past. The ticks are drawn live, with no image files.
+- 🎉 **A completion greeting** with confetti appears once, when every chapter is complete. You can replay it from the Progress card.
+- 🔒 Progress is saved only **in your own browser profile** (`localStorage`). Nothing is sent anywhere. A different Chrome profile starts fresh, and clearing site data or using **Reset progress** erases it. Several tabs of the same profile stay in sync.
+
 ## 🎨 Colours from the paper
 
 Every block uses the pastel fill from Figure 1 of the paper, so the site reads like the diagram you already know.
@@ -198,6 +206,7 @@ You can also open `index.html` directly. Maths (KaTeX) and fonts load from a CDN
 ├── index.html       page shell: top bar, chapter tree, lesson, step panel
 ├── styles.css       theme, layout, responsive rules
 ├── app.js           chapters, state, views, inspector, search
+├── progress.js      saved progress, green ticks and the completion greeting
 ├── model.js         the tiny real Transformer maths (pure functions, easy to test)
 ├── steps.js         the guided step-by-step player
 ├── flow.js          the full-run animation and the mode switch

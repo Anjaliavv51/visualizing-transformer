@@ -58,7 +58,14 @@
       <div class="tree-title"><span class="folder dark"></span><b>Course</b><span class="count">8 chapters</span></div>
       <nav id="course_tree" aria-label="Chapter list"></nav>
     </div>
-    <div class="card progress"><b>PROGRESS</b><span id="progress_val">0 / 8</span></div>
+    <div class="card progress">
+      <div class="progress-row"><b>PROGRESS</b><span id="progress_val">0 / 8</span></div>
+      <div class="progress-track" aria-hidden="true"><i id="progress_bar"></i></div>
+      <div class="progress-actions">
+        <button type="button" id="btn_cele" class="linklike" hidden>🏆 View your greeting</button>
+        <button type="button" id="btn_reset" class="linklike">Reset progress</button>
+      </div>
+    </div>
   </aside>
   <main class="card lesson" id="lesson">
     <div class="crumb"><span id="crumb_group">01. Foundations</span><span>/</span><span id="step_indicator">Lesson 1 of 8</span></div>
@@ -144,6 +151,7 @@
       </div>
     </div>
   </aside>
+<script src="js/progress.js"></script>
 <script src="js/model.js"></script>
 <script src="js/flow.js"></script>
 <script src="js/steps.js"></script>

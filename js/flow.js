@@ -309,7 +309,7 @@
   }, true);
 
   // ---- mode switch: guided steps (default) or the full continuous run ----
-  let mode = 'steps';
+  let mode = (window.Progress && Progress.last().mode) || 'steps';   // remembered between visits
   function render() {
     stop();
     const body = document.getElementById('fl_body');
@@ -317,7 +317,7 @@
     document.querySelectorAll('.mode-btn').forEach((b) => { const on = b.dataset.m === mode; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
     if (mode === 'steps' && window.Steps) window.Steps.mount(body); else mountFull(body);
   }
-  function setMode(m) { mode = m; render(); }
+  function setMode(m) { mode = m; if (window.Progress) Progress.setLast({ mode: m }); render(); }
   function mount() {
     const root = document.getElementById('stage_content');
     root.innerHTML = `<div class="stage-wrap" id="fl_wrap">
