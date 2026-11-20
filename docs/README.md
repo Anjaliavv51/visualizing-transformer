@@ -302,3 +302,5 @@ If this helped you understand the Transformer, a ⭐ on the repo means a lot.
 <sub>Layout inspired by <a href="https://designed-to-scale.vercel.app/">designed-to-scale</a>. Figure colours from the original paper, whose figures Google permits to be reproduced for scholarly work with attribution.</sub>
 
 </div>
+
+<!-- Matrix computation reference: Q, K in R^{n x d_k}, V in R^{n x d_v}, d_model = 512, h = 8 -->
