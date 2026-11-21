@@ -14,6 +14,7 @@
   const T = (A) => A[0].map((_, j) => A.map((r) => r[j]));
   const scale = (A, k) => rm(A.map((r) => r.map((v) => v * k)));
   const relu = (A) => A.map((r) => r.map((v) => Math.max(0, v)));
+  // Numerically stable row-wise softmax: subtract row max, compute exp, normalize sum
   const softmaxRows = (A) => rm(A.map((r) => { const m = Math.max(...r.filter(isFinite)); const e = r.map((v) => (isFinite(v) ? Math.exp(v - m) : 0)); const s = e.reduce((a, b) => a + b, 0); return e.map((v) => v / s); }));
   const layerNorm = (A) => rm(A.map((r) => { const mu = r.reduce((a, b) => a + b, 0) / r.length; const va = r.reduce((a, b) => a + (b - mu) ** 2, 0) / r.length; return r.map((v) => (v - mu) / Math.sqrt(va + 1e-5)); }));
   const rng = (s) => () => { s |= 0; s = (s + 0x6D2B79F5) | 0; let t = Math.imul(s ^ (s >>> 15), 1 | s); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
