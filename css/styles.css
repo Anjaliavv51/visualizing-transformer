@@ -1520,3 +1520,5 @@ body.cele-open { overflow: hidden; }
   .tick:not(.static) { animation: none; }
   .cele-card { animation: none; }
 }
+
+/* Interactive Explainer UI polish: accessibility and keyboard navigation outlines */
