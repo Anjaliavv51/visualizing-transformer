@@ -1521,4 +1521,14 @@ body.cele-open { overflow: hidden; }
   .cele-card { animation: none; }
 }
 
-/* Interactive Explainer UI polish: accessibility and keyboard navigation outlines */
+/* ===== Desktop layout lock: the app always fills the real window =====
+   Before: body used height:100vh. If the browser reported a stale or different viewport height
+   (for example right after DevTools or a window resize), or something was focused out of view,
+   the hidden layout could shift up and leave an empty strip at the bottom.
+   Now: on desktop the body is pinned to the window edges, so there is nothing to scroll or shift. */
+@media (min-width: 1101px) {
+  html, body { height: 100%; overflow: hidden; }
+  body { position: fixed; inset: 0; height: auto; }
+  .shell { overflow: hidden; overflow: clip; }          /* "clip" cannot be scrolled by focus() or scrollIntoView() */
+  .topbar { flex: none; }
+}
